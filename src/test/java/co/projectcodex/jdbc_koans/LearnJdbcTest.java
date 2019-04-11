@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class LearnJdbcTest {
 
-    final String KOANS_DATABASE_URL = "jdbc:h2:~/target/jdbc_koans_db";
+    final String KOANS_DATABASE_URL = "jdbc:h2:./target/jdbc_koans_db";
 
     @BeforeEach
     public void cleanUpTables() {
@@ -18,6 +18,7 @@ public class LearnJdbcTest {
         try {
             try(Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL)) {
                 // delete fruits that the tests are adding
+
 
                 Statement statement = conn.createStatement();
                 statement.addBatch("delete from fruit where name in ('Guava', 'Orange')");
@@ -52,8 +53,8 @@ public class LearnJdbcTest {
             Class.forName("org.h2.Driver");
             // to fix this set the JDBC_URL to a valid value of `jdbc:h2:~/target/jdbc_koans_db` - it will create an
             // embedded database in the target folder
-            final String JDBC_URL = "";
-            Connection conn = DriverManager.getConnection(JDBC_URL);
+            final String JDBC_URL = "jdbc:h2:./target/jdbc_koans_db";
+            Connection conn = DriverManager.getConnection(JDBC_URL, "sa", "");
 
 
         } catch (Exception e) {
@@ -66,7 +67,7 @@ public class LearnJdbcTest {
 
         try {
 
-            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL);
+            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL,"sa", "");
             Statement statement = conn.createStatement();
             ResultSet rs = statement.executeQuery ("select * from fruit");
 
@@ -75,7 +76,7 @@ public class LearnJdbcTest {
 
             // https://flywaydb.org/getstarted/firststeps/maven
 
-            // add a V1__create_fruit.sql file in the src/main/db/migration folder
+            // add a V1__create_fruit.sql file in the src/main/resources/db/migration folder
             // add a create table script in there to create a fruit table
 
             /*
@@ -99,7 +100,7 @@ public class LearnJdbcTest {
 
         try {
 
-            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL);
+            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL, "sa", "");
             Statement statement = conn.createStatement();
             ResultSet rs = statement.executeQuery ("select count(*) as fruit_count from fruit");
 
@@ -130,7 +131,7 @@ public class LearnJdbcTest {
 
         try {
 
-            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL);
+            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL, "sa", "");
             final String INSERT_FRUIT_SQL = "insert into fruit (name, price) values (?, ?)";
             final String FIND_FRUT_SQL = "select name, price from fruit where name = ?";
 
@@ -140,13 +141,16 @@ public class LearnJdbcTest {
 
             // use it to add 2 new fruits an Orange costing 2.37 and a Guava costing 4.13
 
-            addFruitPreparedStatement.setString(1, "__");
-            addFruitPreparedStatement.setDouble(2, 0.00);
+            addFruitPreparedStatement.setString(1, "Orange");
+            addFruitPreparedStatement.setDouble(2, 2.37);
             addFruitPreparedStatement.execute();
 
             // todo - add a Guava costing 4.13
+            addFruitPreparedStatement.setString(1, "Guava");
+            addFruitPreparedStatement.setDouble(2, 4.13);
+            addFruitPreparedStatement.execute();
 
-            ResultSet rs = conn.createStatement().executeQuery("select * as the_count from fruit where name in ('Guava', 'Orange')");
+            ResultSet rs = conn.createStatement().executeQuery("select *  from fruit where name in ('Guava', 'Orange')");
 
             int counter = 0;
             while(rs.next()) {
@@ -156,7 +160,7 @@ public class LearnJdbcTest {
                 }
                 else if ( counter == 2) {
                     // what is the correct price for a Guava
-                    assertEquals(0.00, rs.getDouble("price"));
+                    assertEquals(4.13, rs.getDouble("price"));
                 }
             }
             assertEquals(2, counter);
@@ -171,12 +175,13 @@ public class LearnJdbcTest {
 
         try {
 
-            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL);
+            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL, "sa", "");
             final String FIND_FRUT_SQL_4 = "select name, price from fruit where price > ? order by id asc";
 
             // PreparedStatement are SQL statements that can be called
             // over and over with different parameters
             PreparedStatement findFruitPreparedStatement = conn.prepareStatement(FIND_FRUT_SQL_4);
+            findFruitPreparedStatement.setInt(1,4);
 
             // use it to add 2 new fruits an Orange costing 2.37 and a Guava costing 4.13
 
@@ -188,7 +193,7 @@ public class LearnJdbcTest {
             while(rs.next()) {
                 counter++;
                 if (counter == 1) {
-                    assertEquals("rad apple", rs.getString("name"));
+                    assertEquals(rs.getString("name"),"red apple" );
                     assertEquals(4.75, rs.getDouble("price"));
                 }
                 else if ( counter == 2) {
@@ -209,11 +214,14 @@ public class LearnJdbcTest {
 
         try {
 
-            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL);
+            Connection conn = DriverManager.getConnection(KOANS_DATABASE_URL, "sa", "");
             final String FIND_FRUIT_BY_NAME_SQL = "select price from fruit where name = ? order by id asc";
             final String UPDATE_FRUIT_BY_NAME_SQL = "update fruit set price = ? where name = ?";
 
             PreparedStatement updateFruitPreparedStatement = conn.prepareStatement(UPDATE_FRUIT_BY_NAME_SQL);
+              updateFruitPreparedStatement.setDouble(1 ,5.99);
+              updateFruitPreparedStatement.setString(2, "red apple");
+              updateFruitPreparedStatement.executeUpdate();
 
             // todo - set the params on the findFruitPreparedStatement and run the query;
             // update the price to 5.99 ...
